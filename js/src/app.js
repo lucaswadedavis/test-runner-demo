@@ -8,8 +8,15 @@
     return id();
   };
 
+  var createMockUsers = function () {
+    var names = ["Luke", "Morgan", "Isil", "Brian", "Rico", "Danielle", "Avanti"]
+    for (var i = 0; i < names.length; i++) {
+      app.m.users[names[i]] = new User(names[i]);
+    }
+  };
+
   var User = function (username) {
-    this.name = username;
+    this.name = username.trim().toLowerCase();
     this.id = id();
     this.role = "student";
   };
@@ -33,6 +40,7 @@
   var app = {};
 
   app.init = function(state){
+    createMockUsers();
     app.v.clearPage();
     app.v.login();
   };
