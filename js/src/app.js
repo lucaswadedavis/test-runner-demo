@@ -20,6 +20,16 @@
     this.answer = answerText;
   };
 
+  var Question = function (title, question, deadline) {
+    this.id = id();
+    this.answers = [];
+    this.assignedTo = [];
+    this.assignedBy = app.currentUser.name;
+    this.question = question;
+    this.deadline = deadline;
+    this.title = title;
+  };
+
   var app = {};
 
   app.init = function(state){
@@ -36,11 +46,15 @@
 
   app.currentUser = null;
 
-  app.addQuestion = function (q) {
-    if (!q.question || !q.deadline) return;
+  app.addQuestion = function (title, question, deadline) {
+    if (!title || !question || !deadline) return;
+    var q = {};
     q.assignedTo = [];
     q.assignedBy = app.currentUser.name;
     q.answers = [];
+    q.title = title;
+    q.question = question;
+    q.deadline = deadline;
     var questionID = id();
     q.id = questionID;
     app.m.questions[questionID] = q;
@@ -119,6 +133,10 @@
     qt.append("h2")
       .text("Create a new Question!");
 
+    var title = qt.append("input")
+      .attr("type", "text")
+      .attr("placeholder", "Title");
+
     var questionID = id();
     var question = qt.append("input")
       .attr("id", questionID)
@@ -139,10 +157,8 @@
       });
 
     function saveQuestion () {
-      app.addQuestion({
-        question: question.node().value,
-        deadline: deadline.node().value
-      });
+      app.addQuestion(title.node().value, question.node().value, deadline.node().value);
+      title.node().value = '';
       question.node().value = '';
       deadline.node().value = '';
       app.v.questions();
