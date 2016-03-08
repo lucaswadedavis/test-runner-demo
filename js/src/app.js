@@ -62,8 +62,13 @@
 
   app.addAnswer = function (answer) {
     if (!answer.question || !answer.answer || !app.m.questions[answer.question]) return;
+    
+    // only allow answers before the deadline
+    if (moment().isAfter(moment(app.m.questions[answer.question].deadline, "ddd MMM DD YYYY"))) return;
+
     answer.student = app.currentUser.name;
     var answerID = id();
+    answer.createdAt = moment();
     app.m.answers[answerID] = answer;
   };
 
@@ -131,7 +136,7 @@
       .attr("id", "create-question");
 
     qt.append("h2")
-      .text("Create a new Question!");
+      .text("Anyone can be a Teacher. Create a new Homework question now!");
 
     var title = qt.append("input")
       .attr("type", "text")
@@ -154,7 +159,9 @@
         saveQuestion();
       });
 
-    var pickaday = new Pikaday({field: document.getElementById('deadline')});
+    var pickaday = new Pikaday({
+      field: document.getElementById('deadline')
+    });
 
     function saveQuestion () {
       app.addQuestion(title.node().value, question.node().value, deadline.node().value);
@@ -183,9 +190,21 @@
       .enter()
       .append("div")
       .classed("question", true)
-      .text(function (q) {return q.question;})
       .each(function (q) {
+
+        d3.select(this).append('span')
+          .classed('expires', true)
+          .text(function (q) {return 'due by ' + q.deadline;});
+
+        d3.select(this).append('h3')
+          .text(function (q) {return q.title;});
+
         d3.select(this).append('p')
+          .classed('question-text', true)
+          .text(function (q) {return q.question;});
+        
+        d3.select(this).append('p')
+        .classed('assigned-count', true)
         .text(function (q) {
           return "assigned by " + q.assignedBy + " to " + q.assignedTo.length + " students.";
         });
@@ -227,10 +246,13 @@
         .enter()
         .append('div')
         .classed("answer", true)
-        .text(function (n) {return n.answer;})
         .each(function (answer) {
           d3.select(this).append('p')
-          .text(function (n) {return "answered by " + n.student;});
+            .classed("student", true)
+            .text(function (n) {return n.student + ' [' + n.createdAt.format("ddd MMM DD YYYY") + ']';}); 
+          
+          d3.select(this).append('p')
+          .text(function (n) {return n.answer;});
         });
 
       } else {
