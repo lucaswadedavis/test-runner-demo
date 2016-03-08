@@ -119,16 +119,13 @@
     qt.append("h2")
       .text("Create a new Question!");
 
-    var questionID = id();
     var question = qt.append("input")
-      .attr("id", questionID)
       .attr("type", "text")
       .attr("placeholder", "Question text here...");
 
-    var deadlineID = id();
     var deadline = qt.append("input")
-      .attr("id", deadlineID)
       .attr("type", "text")
+      .attr("id", "deadline")
       .attr("placeholder", "deadline");
 
     qt.append("input")
@@ -137,6 +134,8 @@
       .on("click", function (n) {
         saveQuestion();
       });
+
+    var pickaday = new Pikaday({field: document.getElementById('deadline')});
 
     function saveQuestion () {
       app.addQuestion({
@@ -175,12 +174,19 @@
           return (n.question === q.id);
         });
 
+        d3.select(this).append('h3')
+          .text(answers.length + ' answer' + (answers.length === 1 ? '' : 's') + ' so far');
+
         d3.select(this).selectAll('div.answer')
           .data(answers)
           .enter()
           .append('div')
           .classed("answer", true)
-          .text(function (n) {return n.answer;});
+          .text(function (n) {return n.answer;})
+          .each(function (answer) {
+            d3.select(this).append('p')
+              .text(function (n) {return "answered by " + n.student;});
+          });
 
         } else {
           d3.select(this).append("input")
