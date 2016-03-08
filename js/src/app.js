@@ -112,7 +112,7 @@
 
     login.append("h2")
       .text("login");
-  
+
 
     var username = login.append("input")
       .attr("type", "text")
@@ -165,11 +165,18 @@
     };
 
   };
- 
+
+  app.assignQuestionToStudent = function (student) {
+
+  };
+
   app.v.questions = function () {
     var body = d3.select("body");
-    var questions = _.values(app.m.questions);
-    
+    var questions = _.filter(app.m.questions, function (question) {
+      var name = app.currentUser.name;
+      return (question.assignedBy === name || question.assignedTo.indexOf(name) > -1); 
+    });
+
     body.selectAll("div.question").remove();
     body.selectAll("div.question")
       .data(questions)
@@ -180,39 +187,60 @@
       .each(function (q) {
         d3.select(this).append('p')
         .text(function (q) {
-          return "assigned by " + q.assignedBy + " to " + q.assignedTo.length + " students.";});
-
-        if (q.assignedBy === app.currentUser.name) {
-        d3.select(this).append('input')
-        .attr("type", "button")
-        .attr("value", "assign to another student");
-        
-        var answers = _.filter(app.m.answers, function (n) {
-          return (n.question === q.id);
+          return "assigned by " + q.assignedBy + " to " + q.assignedTo.length + " students.";
         });
 
-        d3.select(this).append('h3')
-          .text(answers.length + ' answer' + (answers.length === 1 ? '' : 's') + ' so far');
-
-        d3.select(this).selectAll('div.answer')
-          .data(answers)
-          .enter()
-          .append('div')
-          .classed("answer", true)
-          .text(function (n) {return n.answer;})
-          .each(function (answer) {
-            d3.select(this).append('p')
-              .text(function (n) {return "answered by " + n.student;});
-          });
-
+      if (q.assignedBy === app.currentUser.name) {
+        d3.selectAll('.assignment').remove();
+        var users = _.values(app.m.users);
+        d3.select(this).selectAll('div.assignment')
+        .data(users)
+        .enter()
+        .append('div')
+        .classed('assignment', true)
+        .text(function (n) {return n.name;})
+        .append('input')
+        .attr('type', 'checkbox')
+        .property('checked', function (n) {
+          return _.contains(q.assignedTo, n.name);
+        })
+      .on('click', function (n) {
+        var index = q.assignedTo.indexOf(n.name);
+        if (index > -1) {
+          // if it's already in the assignedTo collection, remove it
+          q.assignedTo.splice(index, 1);
         } else {
-          d3.select(this).append("input")
-            .attr("type", "button")
-            .attr("value", "answer the question")
-            .on("click", function () {
-              app.v.createAnswer(this, q);
-            }.bind(this));
+          // otherwise, add it
+          q.assignedTo.push(n.name);
         }
+      });
+
+      var answers = _.filter(app.m.answers, function (n) {
+        return (n.question === q.id);
+      });
+
+      d3.select(this).append('h3')
+        .text(answers.length + ' answer' + (answers.length === 1 ? '' : 's') + ' so far');
+
+      d3.select(this).selectAll('div.answer')
+        .data(answers)
+        .enter()
+        .append('div')
+        .classed("answer", true)
+        .text(function (n) {return n.answer;})
+        .each(function (answer) {
+          d3.select(this).append('p')
+          .text(function (n) {return "answered by " + n.student;});
+        });
+
+      } else {
+        d3.select(this).append("input")
+          .attr("type", "button")
+          .attr("value", "answer the question")
+          .on("click", function () {
+            app.v.createAnswer(this, q);
+          }.bind(this));
+      }
       });
   };
 
@@ -252,7 +280,7 @@
       return n.question === question.id && n.student === app.currentUser.name;
     });
   };
-  
+
   window.app = app;
 
 })(d3, _)
